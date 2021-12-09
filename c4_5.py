@@ -28,7 +28,7 @@ import warnings
 warnings.filterwarnings('once')
 
 
-steam_csv = "../steam.csv"
+steam_csv = "./archive/steam.csv"
 steam_df = pd.read_csv(steam_csv)
 steam_df = steam_df.head(1000)
 
@@ -38,7 +38,7 @@ X_train, X_test, y_train, y_test = train_test_split(
                                         steam_df.loc[:,['positive_ratings',
                                                         'negative_ratings']],
                                         steam_df[['categories']],
-                                        random_state = 123
+                                        random_state = 123,test_size=0.55
                                     )
 
 # Se identifica el nombre de las columnas numéricas 
@@ -51,7 +51,7 @@ labels = np.concatenate([numeric_cols])
 # Creación del modelo
 # ------------------------------------------------------------------------------
 modelo = DecisionTreeClassifier(
-            max_depth         = 5,
+            max_depth         = 6,
             criterion         = 'gini',
             random_state      = 123
           )
@@ -68,14 +68,29 @@ fig, ax = plt.subplots(figsize=(13, 6))
 print(f"Profundidad del árbol: {modelo.get_depth()}")
 print(f"Número de nodos terminales: {modelo.get_n_leaves()}")
 
-fig=export_graphviz(modelo,out_file=None,class_names=steam_df['categories'].values,feature_names=labels.tolist(), impurity=False, filled=True)
+plot = plot_tree(
+            decision_tree = modelo,
+            feature_names = labels.tolist(),
+            class_names   = steam_df['categories'],
+            filled        = True,
+            impurity      = False,
+            fontsize      = 6,
+            ax            = ax,
+       )
+
+fig=export_graphviz(modelo,
+                    out_file=None,
+                    class_names=steam_df['categories'],
+                    feature_names=labels.tolist(),
+                    impurity=False,
+                    filled=True)
 grahp=viz.Source(fig, format="svg")
 
 grahp.render("decision_tree_Chido")
 
 # Error de test del modelo
 #-------------------------------------------------------------------------------
-predicciones = modelo.predict(X = X_test,)
+predicciones = modelo.predict(X = X_test)
 
 print("Matriz de confusión")
 print("-------------------")
@@ -101,6 +116,7 @@ grid = GridSearchCV(
         # El árbol se crece al máximo posible antes de aplicar el pruning
         estimator = DecisionTreeClassifier(
                             max_depth         = None,
+                            criterion         = 'gini',
                             min_samples_split = 2,
                             min_samples_leaf  = 1,
                             random_state      = 123
@@ -122,14 +138,11 @@ ax.set_title("Error de validacion cruzada vs hiperparámetro ccp_alpha");
 
 # Mejor valor ccp_alpha encontrado
 # ------------------------------------------------------------------------------
-grid.best_params_
+print("Mejor valor ccp_alpha encontrado", grid.best_params_)
 
 # Estructura del árbol final
 # ------------------------------------------------------------------------------
 modelo_final = grid.best_estimator_
-print(f"Profundidad del árbol: {modelo_final.get_depth()}")
-print(f"Número de nodos terminales: {modelo_final.get_n_leaves()}")
-
 
 # Error de test del modelo final
 #-------------------------------------------------------------------------------
@@ -140,30 +153,4 @@ accuracy = accuracy_score(
             y_pred    = predicciones,
             normalize = True
            )
-print(f"El accuracy de test es: {100 * accuracy} %")
-
-'''
-print("Importancia de los predictores en el modelo")
-print("-------------------------------------------")
-importancia_predictores = pd.DataFrame(
-                            {'predictor': labels.tolist(),
-                             'importancia': modelo_final.feature_importances_}
-                            )
-importancia_predictores.sort_values('importancia', ascending=False)
-# Predicción de probabilidades
-#-------------------------------------------------------------------------------
-predicciones = modelo.predict_proba(X = X_test)
-print(predicciones[:, :])
-print(predicciones.shape)
-# Clasificación empleando la clase de mayor probabilidad
-# ------------------------------------------------------------------------------
-df_predicciones = pd.DataFrame(data=predicciones)
-print(df_predicciones[0])
-print(df_predicciones[1])
-df_predicciones['clasificacion_default_0.5'] = np.where(df_predicciones[0] > df_predicciones[1], 0, 1)
-print(df_predicciones.head(3))
-# Clasificación final empleando un threshold de 0.8 para la clase 1.
-# ------------------------------------------------------------------------------
-df_predicciones['clasificacion_custom_0.8'] = np.where(df_predicciones[1] > 0.8, 1, 0)
-print(df_predicciones.iloc[:, :])''' #work in progress
-
+print(f"El accuracy de test postpoda es: {100 * accuracy} %")
