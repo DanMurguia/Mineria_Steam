@@ -2,8 +2,6 @@
 # ------------------------------------------------------------------------------
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
-
 # Gráficos
 # ------------------------------------------------------------------------------
 import matplotlib.pyplot as plt
@@ -14,13 +12,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import plot_tree
 from sklearn.tree import export_graphviz
-import graphviz as viz
-from sklearn.tree import export_text
-from sklearn.model_selection import GridSearchCV
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
+#from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
+import graphviz as viz
 
 # Configuración warnings
 # ------------------------------------------------------------------------------
@@ -30,15 +25,15 @@ warnings.filterwarnings('once')
 
 steam_csv = "./archive/steam.csv"
 steam_df = pd.read_csv(steam_csv)
-steam_df = steam_df.head(1000)
+steam_df = steam_df
 
 # División de los datos en train y test
 # ------------------------------------------------------------------------------
 X_train, X_test, y_train, y_test = train_test_split(
                                         steam_df.loc[:,['positive_ratings',
                                                         'negative_ratings']],
-                                        steam_df[['categories']],
-                                        random_state = 123,test_size=0.55
+                                        steam_df[['owners']],
+                                        random_state = 123,test_size=0.4
                                     )
 
 # Se identifica el nombre de las columnas numéricas 
@@ -51,7 +46,7 @@ labels = np.concatenate([numeric_cols])
 # Creación del modelo
 # ------------------------------------------------------------------------------
 modelo = DecisionTreeClassifier(
-            max_depth         = 6,
+            max_depth         = 5,
             criterion         = 'gini',
             random_state      = 123
           )
@@ -71,7 +66,7 @@ print(f"Número de nodos terminales: {modelo.get_n_leaves()}")
 plot = plot_tree(
             decision_tree = modelo,
             feature_names = labels.tolist(),
-            class_names   = steam_df['categories'],
+            class_names   = steam_df['owners'].values,
             filled        = True,
             impurity      = False,
             fontsize      = 6,
@@ -80,7 +75,7 @@ plot = plot_tree(
 
 fig=export_graphviz(modelo,
                     out_file=None,
-                    class_names=steam_df['categories'],
+                    class_names=steam_df['owners'].values,
                     feature_names=labels.tolist(),
                     impurity=False,
                     filled=True)
@@ -106,9 +101,9 @@ accuracy = accuracy_score(
            )
 print(f"El accuracy de test es: {100 * accuracy} %")
 
-# Post pruning (const complexity pruning) por validación cruzada
+# Post pruning (const complexity pruning) por validación cruzada (solo para c4.5)
 # ------------------------------------------------------------------------------
-# Valores de ccp_alpha evaluados
+'''# Valores de ccp_alpha evaluados
 param_grid = {'ccp_alpha':np.linspace(0, 5, 10)}
 
 # Búsqueda por validación cruzada
@@ -143,7 +138,8 @@ print("Mejor valor ccp_alpha encontrado", grid.best_params_)
 # Estructura del árbol final
 # ------------------------------------------------------------------------------
 modelo_final = grid.best_estimator_
-
+print(f"Profundidad del árbol: {modelo_final.get_depth()}")
+print(f"Número de nodos terminales: {modelo_final.get_n_leaves()}")
 # Error de test del modelo final
 #-------------------------------------------------------------------------------
 predicciones = modelo_final.predict(X = X_test)
@@ -153,4 +149,20 @@ accuracy = accuracy_score(
             y_pred    = predicciones,
             normalize = True
            )
-print(f"El accuracy de test postpoda es: {100 * accuracy} %")
+print(f"El accuracy de test postpoda es: {100 * accuracy} %")'''
+
+print("Importancia de los predictores en el modelo")
+print("-------------------------------------------")
+importancia_predictores = pd.DataFrame(
+                            {'predictor': labels.tolist(),
+                             'importancia': modelo.feature_importances_}
+                            )
+print(importancia_predictores.sort_values('importancia', ascending=False))
+
+# Predicción de probabilidades
+#-------------------------------------------------------------------------------
+predicciones = modelo.predict_proba(X = X_test)
+# Probabilidad de clasificación según el modelo
+# ------------------------------------------------------------------------------
+df_predicciones = pd.DataFrame(data=predicciones, columns=steam_df['owners'].unique())
+df_predicciones.to_csv('predicciones.csv',index=False)
