@@ -10,7 +10,7 @@ from sklearn.preprocessing import OrdinalEncoder
 
 
 
-steam_csv = "./archive/steam.csv"
+steam_csv = "steam.csv"
 steam_df = pd.read_csv(steam_csv)
 steam_df = steam_df.head(100)
 enc = OrdinalEncoder()
@@ -20,11 +20,9 @@ owns = owns.flatten()
 print(owns)
 
 X_train, X_test, y_train, y_test = train_test_split(
-                                        steam_df.loc[:,['price',
-                                                        'positive_ratings']],
+                                        steam_df.loc[:,['price']],
                                         owns,
                                         random_state = 123,test_size=0.3)
-
 
 
 #Instanciamos el modelo
@@ -56,3 +54,16 @@ plt.grid(linewidth='2')
 plt.grid(None)
 plt.show()
 
+print(X_test.shape)
+print(X_train.shape)
+print(y_test.shape)
+print(y_train.shape)
+print(predictions_test.shape)
+print(predictions_train.shape)
+
+plt.plot(X_test,y_test,'ro')
+plt.plot(X_test,predictions_test)
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Regresión')
+plt.show()
