@@ -1,4 +1,4 @@
 # Mineria_Steam
 Proyecto de minería de datos sobre el catalogo de juegos de steam
 
-Dios nos a abandonado 
+Dios nos ha abandonado 
