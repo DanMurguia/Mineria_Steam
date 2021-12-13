@@ -10,6 +10,7 @@ from scipy.cluster.hierarchy import fcluster
 from scipy.cluster.hierarchy import cophenet
 from scipy.spatial.distance import pdist
 
+
 import matplotlib.pyplot as plt
 from pylab import rcParams
 import seaborn as sb
@@ -37,7 +38,7 @@ df_completo = pd.merge(left=steam_df,right=req_df,
 
 ##Limpieza de columnas nulas
 df_completo.drop(['minimum', 'recommended'], axis='columns',inplace=True)
-df_completo = df_completo.head(n=100)
+df_completo = df_completo. head(100)
 
 #conversion de pandas dataframe a numpy array
 generos_array = df_completo[['genres']].copy()
@@ -46,7 +47,7 @@ generos_transformed = enc.fit_transform(generos_array)
 
 #obtencion de variable de entrada(data) y obtencion de variable de salida(target)
 data = scale(generos_transformed)
-target = df_completo['genres']
+target = generos_transformed
 nombres_variables = generos_array.values
 nombres_variables = nombres_variables.tolist()
 
@@ -64,24 +65,23 @@ plt.axhline(10)
 plt.show()
 #Generacion de los clusters jerarquicos
  
-k = 2 
+k = 3
 #construcción del modelo
 HClustering = AgglomerativeClustering(n_clusters=k , affinity="euclidean",
                                       linkage="ward")
 #acomodar el modelo con el dataset
-fit = HClustering.fit(generos_transformed)
+fit = HClustering.fit_predict(generos_transformed)
 #presición del modelo
 print(sm.accuracy_score(target,HClustering.labels_))
 
-clusters = unique(fit)
+clusters = unique(generos_transformed)
 # creación del grafico de dispersión
 for cluster in clusters:
 	# obtenemos los indices de las filas 
 	row_ix = where(fit == cluster)
 	# creación de las dispersiones de las muestras 
-	plt.scatter(generos_transformed[row_ix, 0], generos_transformed[row_ix, 0])
+	plt.scatter(generos_transformed[:, 0], generos_transformed[:, 0], cmap='rainbow')
 # muestra la grafica
 plt.show()
-#$print(generos_inverted.ndim)
-#print(df_completo.isnull().any())
-##print(req_df.dtypes)
+
+
