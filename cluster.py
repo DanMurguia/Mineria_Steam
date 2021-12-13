@@ -18,7 +18,7 @@ import sklearn
 from sklearn.cluster import AgglomerativeClustering
 import sklearn.metrics as sm
 from sklearn.preprocessing import scale
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OrdinalEncoder
 
 #configurar el arreglo numpy para utilizar hasta 4 puntos flotantes
 np.set_printoptions(precision=4,suppress=True)
@@ -26,8 +26,8 @@ rcParams["figure.figsize"] =20,10
 sb.set_style("whitegrid")
 
 ##Se abren los conjuntos de datos 
-steam_csv = "../archive/steam.csv"
-req_csv = "../archive/steam_requirements_data.csv"
+steam_csv = "./archive/steam.csv"
+req_csv = "./archive/steam_requirements_data.csv"
 steam_df = pd.read_csv(steam_csv)
 req_df = pd.read_csv(req_csv)
 
@@ -41,42 +41,9 @@ df_completo = df_completo.head(n=100)
 
 #conversion de pandas dataframe a numpy array
 generos_array = df_completo[['genres']].copy()
-ohe = OneHotEncoder(sparse=False)
-generos_transformed = ohe.fit_transform(generos_array)
-'''
-# One-hot-encoding de las variables categóricas
-# ------------------------------------------------------------------------------
-# Se identifica el nobre de las columnas numéricas y categóricas
-cat_cols = X_train.select_dtypes(include=['object', 'category']).columns.to_list()
-numeric_cols = X_train.select_dtypes(include=['float64', 'int']).columns.to_list()
+enc = OrdinalEncoder()
+generos_transformed = enc.fit_transform(generos_array)
 
-# Se aplica one-hot-encoding solo a las columnas categóricas
-preprocessor = ColumnTransformer(
-                    [('onehot', OneHotEncoder(handle_unknown='ignore'), cat_cols)],
-                    remainder='passthrough'
-               )
-
-# Una vez que se ha definido el objeto ColumnTransformer, con el método fit()
-# se aprenden las transformaciones con los datos de entrenamiento y se aplican a
-# los dos conjuntos con transform(). Ambas operaciones a la vez con fit_transform().
-X_train_prep = preprocessor.fit_transform(X_train)
-X_test_prep  = preprocessor.transform(X_test)
-
-# Convertir el output del ColumnTransformer en dataframe y añadir el nombre de las columnas
-# ------------------------------------------------------------------------------
-# Nombre de todas las columnas
-encoded_cat = preprocessor.named_transformers_['onehot'].get_feature_names(cat_cols)
-labels = np.concatenate([numeric_cols, encoded_cat])
-
-# Conversión a dataframe
-X_train_prep = pd.DataFrame(X_train_prep, columns=labels)
-X_test_prep  = pd.DataFrame(X_test_prep, columns=labels)
-print(X_train_prep.info())
-'''
-'''
-feature_names = ohe.get_feature_names()
-generos_inverted = ohe.inverse_transform(generos_transformed)
-'''
 #obtencion de variable de entrada(data) y obtencion de variable de salida(target)
 data = scale(generos_transformed)
 target = df_completo['genres']
@@ -112,7 +79,7 @@ for cluster in clusters:
 	# obtenemos los indices de las filas 
 	row_ix = where(fit == cluster)
 	# creación de las dispersiones de las muestras 
-	plt.scatter(generos_transformed[row_ix, 0], generos_transformed[row_ix, 1])
+	plt.scatter(generos_transformed[row_ix, 0], generos_transformed[row_ix, 0])
 # muestra la grafica
 plt.show()
 #$print(generos_inverted.ndim)
